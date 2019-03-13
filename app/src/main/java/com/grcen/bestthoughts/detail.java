@@ -8,6 +8,7 @@ import android.media.Image;
 import android.os.Bundle;
 import android.app.Activity;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,7 @@ import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
 import com.grcen.bestthoughts.Bean.Comment;
+import com.grcen.bestthoughts.Bean.ExampleBean;
 import com.grcen.bestthoughts.Bean.Head;
 import com.grcen.bestthoughts.adapters.CommentAdapter;
 
@@ -46,11 +48,12 @@ public class detail extends Activity {
     public static final String CONTEXT_URL = "context_Url";
     public static final String CONTENT_id = "content_id";
 
-    private Head head = new Head("hahaha", "nihao", 2, 3, 4);
+    public Head head = new Head("hahaha", "nihao", 2, 3, 4);
     private Comment[] comments = {new Comment("你好", "哈哈哈", "https://graph.baidu.com/resource/1025ad5cdbcfb098df3b401551352015.jpg", "22222", 666, 233, "")};
-    private List<Comment> commentList = new ArrayList<>();
+    private List<ExampleBean> mlist = new ArrayList<>();
     private CommentAdapter adapter;
-    private CommentAdapter adapter2;
+    RecyclerView recyclerView;
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,26 +69,9 @@ public class detail extends Activity {
         final int downurl = b.getInt(DOWN_URL);
         int share = b.getInt(SHARE_URL);
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         CircleImageView iconbutton = (CircleImageView) findViewById(R.id.icon);
-//        ImageView imageView = (ImageView) findViewById(R.id.image);
-//        TextView contenttext = (TextView) findViewById(R.id.content);
-//        final TextView zantext = (TextView) findViewById(R.id.zan);
-//        final TextView downtext = (TextView) findViewById(R.id.down);
-//        TextView sharetext = (TextView) findViewById(R.id.share);
-//        final ImageView zanimage = (ImageView)findViewById(R.id.zanimage);
-//        final ImageView zannoimage = (ImageView)findViewById(R.id.downimage);
-//        LinearLayout up = (LinearLayout) findViewById(R.id.upview);
-//        LinearLayout down =(LinearLayout) findViewById(R.id.downview);
-
         Glide.with(getApplicationContext()).load(iconurl).error(R.mipmap.oherro).into(iconbutton);
-//        loadIntoUseFitWidth(getApplicationContext(), image, R.mipmap.load, imageView);
-
-//        contenttext.setText(content);
-//        zantext.setText(zanurl + "");
-//        downtext.setText(downurl + "");
-//        sharetext.setText(share + "");
-//
         ImageButton back = (ImageButton) findViewById(R.id.back);
         back.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,83 +79,51 @@ public class detail extends Activity {
                 finish();
             }
         });
-//        imageView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(getApplicationContext(), activity_image.class);
-//                intent.putExtra(activity_image.IMAGE_URL, image);
-//                getApplicationContext().startActivity(intent);
-//            }
-//        });
-//        up.setOnClickListener(new View.OnClickListener() {
-//            @SuppressLint("ResourceAsColor")
-//            @Override
-//            public void onClick(View v) {
-//                int zannew = zanurl+1;
-//                zantext.setText(zannew+ " ");
-//                zantext.setTextColor(R.color.zancolor);
-//                zanimage.setImageResource(R.mipmap.up);
-//            }
-//        });
-//        down.setOnClickListener(new View.OnClickListener() {
-//            @SuppressLint("ResourceAsColor")
-//            @Override
-//            public void onClick(View v) {
-//                int zannonew = downurl+1;
-//                downtext.setText(zannonew+ " ");
-//                downtext.setTextColor(R.color.zancolor);
-//                zannoimage.setImageResource(R.mipmap.down);
-//            }
-//        });
+        
+        initHead(content,image,zanurl,downurl,share);
         initComment();
+        initFoot();
         GridLayoutManager layoutManager = new GridLayoutManager(this, 1);
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new CommentAdapter(getApplicationContext(), commentList);
-
-        recyclerView.setAdapter(adapter);
+        initAdapter();
     }
 
-    private void initComment() {
-        commentList.clear();
-        for (int i = 0; i < 5; i++) {
-            Random random = new Random();
-            int index = random.nextInt(comments.length);
-            commentList.add(comments[index]);
+    private void initAdapter() {
+        if (adapter == null) {
+            adapter = new CommentAdapter(mlist);
+            recyclerView.setLayoutManager(new LinearLayoutManager(context));
+            recyclerView.setAdapter(adapter);
+        } else {
+            adapter.notifyDataSetChanged();
         }
     }
 
-//    /**
-//     * 自适应宽度加载图片。保持图片的长宽比例不变，通过修改imageView的高度来完全显示图片。
-//     */
-//    public static void loadIntoUseFitWidth(Context context, final String imageUrl, int errorImageId, final ImageView imageView) {
-//        Glide.with(context)
-//                .load(imageUrl)
-//                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-//                .listener(new RequestListener<String, GlideDrawable>() {
-//                    @Override
-//                    public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-//                        return false;
-//                    }
-//
-//                    @Override
-//                    public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-//                        if (imageView == null) {
-//                            return false;
-//                        }
-//                        if (imageView.getScaleType() != ImageView.ScaleType.FIT_XY) {
-//                            imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-//                        }
-//                        ViewGroup.LayoutParams params = imageView.getLayoutParams();
-//                        int vw = imageView.getWidth() - imageView.getPaddingLeft() - imageView.getPaddingRight();
-//                        float scale = (float) vw / (float) resource.getIntrinsicWidth();
-//                        int vh = Math.round(resource.getIntrinsicHeight() * scale);
-//                        params.height = vh + imageView.getPaddingTop() + imageView.getPaddingBottom();
-//                        imageView.setLayoutParams(params);
-//                        return false;
-//                    }
-//                })
-//                .placeholder(errorImageId)
-//                .error(errorImageId)
-//                .into(imageView);
-//    }
+
+    private void initFoot() {
+        ExampleBean footBean = new ExampleBean();
+        footBean.setViewType(CommentAdapter.FOOT_TYPE);
+        mlist.add(footBean);
+    }
+
+    private void initHead(String content,String imageid,int zannum,int zannonum,int sharenum) {
+        mlist.clear();
+        if (content != null){
+            Head head = new Head(content, imageid, zannum, zannonum, sharenum);
+            head.setViewType(CommentAdapter.HEAD_TYPE);
+            mlist.add(head);
+        }else {
+        Head head = new Head("哦豁，没有评论", "", 233, 233, 233);
+            head.setViewType(CommentAdapter.HEAD_TYPE);
+            mlist.add(head);
+        }
+    }
+
+    private void initComment() {
+        for (int i = 0; i < 5; i++) {
+            Random random = new Random();
+            int index = random.nextInt(comments.length);
+            comments[index].setViewType(CommentAdapter.BODY_TYPE);
+            mlist.add(comments[index]);
+        }
+    }
 }
