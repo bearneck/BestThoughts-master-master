@@ -36,6 +36,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+
+
 public class MainFragment extends Fragment {
 
     private static final String TAG = "MainFragment-mm";
@@ -113,10 +115,22 @@ public class MainFragment extends Fragment {
             new Picture("老陈","你也是是真的牛逼",123,126,559,"https://upload.jianshu.io/users/upload_avatars/6560575/d69fb270-103a-4eec-b070-d5e7aa2e9c96.jpg?imageMogr2/auto-orient/strip|imageView2/1/w/96/h/96","https://cdn2.jianshu.io/assets/web/web-note-ad-1-c2e1746859dbf03abe49248893c9bea4.png",0,"18682920",27312135)
 
     };
+    public static final int UPDATE_ADAPTER = 1;
     private List<Picture> pictureList = new ArrayList<>();
     private PictureAdapter adapter;
     private SwipeRefreshLayout swipeRefresh;
     private int page = 0;
+    private Handler handler  = new Handler(){
+        public void handleMessage(Message msg){
+            switch (msg.what){
+                case UPDATE_ADAPTER :
+                    adapter.notifyDataSetChanged();
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
     @SuppressLint("ResourceAsColor")
     private void initPictureView(View view) {
         initPictures();
@@ -187,8 +201,9 @@ public class MainFragment extends Fragment {
                          Picture pictures1 = new Picture(username,text,up,comment,forward,header,thumbnail,down,uid,soureid);
                          pictureList.add(pictures1);
                     }
-
-//
+                    Message message = new Message();
+                    message.what = UPDATE_ADAPTER;
+                    handler.sendMessage(message);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -209,7 +224,7 @@ public class MainFragment extends Fragment {
                     @Override
                     public void run() {
 //                        initPictures();
-                        adapter.notifyDataSetChanged();
+//                        adapter.notifyDataSetChanged();
                         swipeRefresh.setRefreshing(false);
                     }
                 });
@@ -218,13 +233,15 @@ public class MainFragment extends Fragment {
     }
 
     private void initPictures() {
-        Log.d(TAG, "initPictures: 准备删除");
-        pictureList.clear();//随机调取数据
-        Log.d(TAG, "initPictures: 完成删除");
-        for (int i =0;i<3;i++){
-            Random random = new Random();
-            int index = random.nextInt(pictures.length);
-            pictureList.add(pictures[index]);
+        if (pictureList == null) {
+            pictureList.clear();//随机调取数据
+            for (int i =0;i<3;i++) {
+                Random random = new Random();
+                int index = random.nextInt(pictures.length);
+                pictureList.add(pictures[index]);
+            }
+        }else {
+
         }
     }
 

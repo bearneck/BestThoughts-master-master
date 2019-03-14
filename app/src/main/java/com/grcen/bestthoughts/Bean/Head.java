@@ -1,6 +1,6 @@
 package com.grcen.bestthoughts.Bean;
 
-public class Head {
+public class Head extends ExampleBean{
     private String content;
     private String imageId;
     private int zannum;

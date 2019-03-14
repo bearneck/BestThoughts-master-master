@@ -1,12 +1,10 @@
 package com.grcen.bestthoughts.adapters;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
-import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.TextInputEditText;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,55 +12,54 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.grcen.bestthoughts.Bean.Comment;
+import com.grcen.bestthoughts.Bean.ExampleBean;
 import com.grcen.bestthoughts.Bean.Head;
 import com.grcen.bestthoughts.R;
-import com.grcen.bestthoughts.detail;
+import com.grcen.bestthoughts.activity_image;
 
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class CommentAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<Comment> mCommentList;
-    private Head mHead;
-    private static final int HEAD_TYPE = 00001;
-    private static final int BODY_TYPE = 00002;
-    private static final int FOOT_TYPE = 00003;
-    private int headCount = 1;//头部个数，后续可以自己拓展
-    private int footCount = 1;//尾部个数，后续可以自己拓展
+import static android.support.constraint.Constraints.TAG;
+
+public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private List<ExampleBean> mlist;//adapter的数据源
+    public static final int HEAD_TYPE = 00001;
+    public static final int BODY_TYPE = 00002;
+    public static final int FOOT_TYPE = 00003;
     private LayoutInflater mLayoutInflater;
+    private Context context;
 
-    public void AddHeadAdapter(Context context, Head head) {
-        mLayoutInflater = LayoutInflater.from(context);
-        mHead = head;
-    }
-
-    public CommentAdapter(Context context, List<Comment> commentList) {
-        mLayoutInflater = LayoutInflater.from(context);
-        mCommentList = commentList;
+    public CommentAdapter(List<ExampleBean> mlist) {
+        this.mlist = mlist;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//        if (mContext==null){
-//            mContext = parent.getContext();
-//        }
-//        View view = LayoutInflater.from(mContext).inflate(R.layout.content_item,parent,false);
-//        return new ViewHolder(view);
+
+
+        if (context == null)
+            context = parent.getContext();
+        if (mLayoutInflater == null)
+            mLayoutInflater = LayoutInflater.from(context);
+        View view;
         switch (viewType) {
             case HEAD_TYPE:
-                return new HeadViewHolder(mLayoutInflater.inflate(R.layout.detailhead, parent, false));
+                view = mLayoutInflater.inflate(R.layout.detailhead, parent, false);
+                return new HeadViewHolder(view);
             case BODY_TYPE:
-                return new BodyViewHolder(mLayoutInflater.inflate(R.layout.content_item, parent, false));
+                view = mLayoutInflater.inflate(R.layout.content_item, parent, false);
+                return new BodyViewHolder(view);
             case FOOT_TYPE:
-                return new FootViewHolder(mLayoutInflater.inflate(R.layout.detailfoot, parent, false));
+                view = mLayoutInflater.inflate(R.layout.detailfoot, parent, false);
+                return new FootViewHolder(view);
             default:
                 return null;
         }
@@ -71,22 +68,55 @@ public class CommentAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHol
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof HeadViewHolder) {
+            final Head head = (Head) mlist.get(position);
+            ((HeadViewHolder) holder).zantext.setText(head.getZannum() + "");
+            ((HeadViewHolder) holder).downtext.setText(head.getZannonum() + "");
+            ((HeadViewHolder) holder).contenttext.setText(head.getContent() + "");
+            ((HeadViewHolder) holder).sharetext.setText(head.getSharenum() + "");
+            loadIntoUseFitWidth(context, head.getImageId(), R.mipmap.load, ((HeadViewHolder) holder).imageView);
 
+            ((HeadViewHolder) holder).imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, activity_image.class);
+                intent.putExtra(activity_image.IMAGE_URL,head.getImageId());
+                context.startActivity(intent);
+            }
+        });
+            ((HeadViewHolder) holder).up.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
+            @Override
+            public void onClick(View v) {
+                int zannew = head.getZannum()+1;
+                ((HeadViewHolder) holder).zantext.setText(zannew+ " ");
+                ((HeadViewHolder) holder).zantext.setTextColor(R.color.zancolor);
+                ((HeadViewHolder) holder).zanimage.setImageResource(R.mipmap.up);
+            }
+        });
+            ((HeadViewHolder) holder).down.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
+            @Override
+            public void onClick(View v) {
+                int zannonew = head.getZannonum()+1;
+                ((HeadViewHolder) holder).downtext.setText(zannonew+ " ");
+                ((HeadViewHolder) holder).downtext.setTextColor(R.color.zancolor);
+                ((HeadViewHolder) holder).zannoimage.setImageResource(R.mipmap.down);
+            }
+        });
         } else if (holder instanceof BodyViewHolder) {
 //            ((BodyViewHolder) holder).body.setText((CharSequence) listData.get(position-headCount));
-            Context context;
-            Comment comment = mCommentList.get(position - 1);
+            final Comment comment = (Comment) mlist.get(position);
             ((BodyViewHolder) holder).userid.setText(comment.getName());
             ((BodyViewHolder) holder).upnum.setText(comment.getZannum() + "");
             ((BodyViewHolder) holder).downnum.setText(comment.getDownnum() + "");
             ((BodyViewHolder) holder).content.setText(comment.getContent());
-            Glide.with(((BodyViewHolder) holder).itemView.getContext()).load(comment.getIconId()).error(R.mipmap.oherro).into(((BodyViewHolder) holder).Iconimage);
+            Glide.with(((BodyViewHolder) holder).itemView.getContext()).load(comment.getIconId()).thumbnail(0.1f).error(R.mipmap.oherro).into(((BodyViewHolder) holder).Iconimage);
             ((BodyViewHolder) holder).zanbutton.setOnClickListener(new View.OnClickListener() {
                 @SuppressLint("ResourceAsColor")
                 @Override
                 public void onClick(View v) {
-                    int zannew = 233 + 1;
-                    ((BodyViewHolder) holder).upnum.setText(zannew + " ");
+                    int zannew = comment.getZannum() + 1;
+                    ((BodyViewHolder) holder).upnum.setText(zannew + "");
                     ((BodyViewHolder) holder).upnum.setTextColor(R.color.zancolor);
                     ((BodyViewHolder) holder).zanbutton.setImageResource(R.mipmap.up);
                 }
@@ -95,8 +125,8 @@ public class CommentAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHol
                 @SuppressLint("ResourceAsColor")
                 @Override
                 public void onClick(View v) {
-                    int zannonew = 666 + 1;
-                    ((BodyViewHolder) holder).downnum.setText(zannonew + " ");
+                    int zannonew = comment.getDownnum() + 1;
+                    ((BodyViewHolder) holder).downnum.setText(zannonew + "");
                     ((BodyViewHolder) holder).downnum.setTextColor(R.color.zancolor);
                     ((BodyViewHolder) holder).zannobutton.setImageResource(R.mipmap.down);
                 }
@@ -110,31 +140,15 @@ public class CommentAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     @Override
     public int getItemCount() {
-//        return mCommentList.size();
-        return headCount + getBodySize() + footCount;
+        return mlist.size();
     }
 
-    //判断头尾部以及内容区域
-    private int getBodySize() {
-        return mCommentList.size();
-    }
-
-    private boolean isHead(int position) {
-        return headCount != 0 && position < headCount;
-    }
-
-    private boolean isFoot(int position) {
-        return footCount != 0 && (position >= (getBodySize() + headCount));
-    }
 
     public int getItemViewType(int position) {
-        if (isHead(position)) {
-            return HEAD_TYPE;
-        } else if (isFoot(position)) {
-            return FOOT_TYPE;
-        } else {
-            return BODY_TYPE;
+        if (mlist.size() > 0) {
+            return mlist.get(position).getViewType();
         }
+        return super.getItemViewType(position);
     }
 
     private static class HeadViewHolder extends RecyclerView.ViewHolder {
@@ -156,7 +170,7 @@ public class CommentAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHol
             downtext = (TextView) itemView.findViewById(R.id.down);
             sharetext = (TextView) itemView.findViewById(R.id.share);
             zanimage = (ImageView) itemView.findViewById(R.id.zanimage);
-            ImageView zannoimage = (ImageView) itemView.findViewById(R.id.downimage);
+            zannoimage = (ImageView) itemView.findViewById(R.id.downimage);
             up = (LinearLayout) itemView.findViewById(R.id.upview);
             down = (LinearLayout) itemView.findViewById(R.id.downview);
         }

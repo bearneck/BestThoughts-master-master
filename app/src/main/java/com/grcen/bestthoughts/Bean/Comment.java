@@ -1,22 +1,20 @@
 package com.grcen.bestthoughts.Bean;
 
-public class Comment {
+public class Comment extends ExampleBean{
     private String name;
     private String content;
     private String iconId;
     private String uid;
     private int zannum;
     private int downnum;
-    private String imageurl;
 
-    public Comment(String name, String content, String iconId, String uid, int zannum, int down, String imageurl) {
+    public Comment(String name, String content, String iconId, String uid, int zannum, int down) {
         this.name = name;
         this.content = content;
         this.iconId = iconId;
         this.uid = uid;
         this.zannum = zannum;
         this.downnum = down;
-        this.imageurl = imageurl;
     }
 
     public String getIconId() {
@@ -67,11 +65,4 @@ public class Comment {
         this.downnum = downnum;
     }
 
-    public String getImageurl() {
-        return imageurl;
-    }
-
-    public void setImageurl(String imageurl) {
-        this.imageurl = imageurl;
-    }
 }

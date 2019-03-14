@@ -102,6 +102,7 @@ public class PictureAdapter extends RecyclerView.Adapter<PictureAdapter.ViewHold
                 bundle.putInt(detail.ZAN_URL,picture.getZannum());
                 bundle.putInt(detail.SHARE_URL,picture.getSharenum());
                 bundle.putString(detail.CONTEXT_URL,picture.getContent());
+                bundle.putInt(detail.CONTENT_id,picture.getSoureid());
                 intent.putExtras(bundle);
                 mContext.startActivity(intent);//启动TwoActivity活动
             }
@@ -154,6 +155,7 @@ public class PictureAdapter extends RecyclerView.Adapter<PictureAdapter.ViewHold
                 bundle.putInt(detail.SHARE_URL,picture.getSharenum());
                 bundle.putString(detail.CONTEXT_URL,picture.getContent());
                 intent.putExtras(bundle);
+
                 mContext.startActivity(intent);//启动TwoActivity活动
             }
         });
