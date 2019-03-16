@@ -33,8 +33,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
+import me.imid.swipebacklayout.lib.app.SwipeBackActivity;
 
-public class activity_image extends Activity {
+
+public class activity_image extends SwipeBackActivity {
 
     public static final String IMAGE_URL = "image_Url";
 
@@ -70,9 +72,9 @@ public class activity_image extends Activity {
             @Override
             public void onClick(View v) {
                 //清除Glide硬盘缓存的图片文件
-                if (imageCacheFile[0] != null) {
-                    imageCacheFile[0].delete();
-                }
+//                if (imageCacheFile[0] != null) {
+//                    imageCacheFile[0].delete();
+//                }
                 finish();
             }
         });

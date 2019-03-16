@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Random;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import me.imid.swipebacklayout.lib.app.SwipeBackActivity;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -56,7 +57,7 @@ import okhttp3.Response;
 import static com.bumptech.glide.gifdecoder.GifHeaderParser.TAG;
 import static java.lang.System.load;
 
-public class detail extends Activity {
+public class detail extends SwipeBackActivity {
     public static final int UPDATE_ADAPTER = 1;
     public static final int FAITL_LOAD = 2;
 

@@ -109,7 +109,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             ((BodyViewHolder) holder).upnum.setText(comment.getZannum() + "");
             ((BodyViewHolder) holder).downnum.setText(comment.getDownnum() + "");
             ((BodyViewHolder) holder).content.setText(comment.getContent());
-            Glide.with(((BodyViewHolder) holder).itemView.getContext()).load(comment.getIconId()).thumbnail(0.1f).error(R.mipmap.oherro).into(((BodyViewHolder) holder).Iconimage);
+            Glide.with(((BodyViewHolder) holder).itemView.getContext()).load(comment.getIconId()).placeholder(R.mipmap.usericon).thumbnail(0.1f).error(R.mipmap.oherro).into(((BodyViewHolder) holder).Iconimage);
             ((BodyViewHolder) holder).zanbutton.setOnClickListener(new View.OnClickListener() {
                 @SuppressLint("ResourceAsColor")
                 @Override
@@ -240,7 +240,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
                 })
                 .placeholder(errorImageId)
-                .error(errorImageId)
+                .error(R.mipmap.oherro)
                 .into(imageView);
     }
 }
