@@ -44,7 +44,6 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-
         if (context == null)
             context = parent.getContext();
         if (mLayoutInflater == null)
@@ -187,7 +186,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         ImageButton zannobutton;
 
         //        TextView body;
-        public BodyViewHolder(View itemView) {
+        private BodyViewHolder(View itemView) {
             super(itemView);
             linearLayout = (LinearLayout) itemView;
             Iconimage = (CircleImageView) itemView.findViewById(R.id.icon);

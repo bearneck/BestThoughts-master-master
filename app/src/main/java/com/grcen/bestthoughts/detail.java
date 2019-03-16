@@ -21,6 +21,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.Toolbar;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -56,6 +58,7 @@ import static java.lang.System.load;
 
 public class detail extends Activity {
     public static final int UPDATE_ADAPTER = 1;
+    public static final int FAITL_LOAD = 2;
 
     public static final String IMAGE_URL = "image_Url";
     public static final String ICON_URL = "icon_Url";
@@ -80,6 +83,8 @@ public class detail extends Activity {
                 case UPDATE_ADAPTER :
                     adapter.notifyDataSetChanged();
                     break;
+                case FAITL_LOAD:
+                    Toast.makeText(getApplicationContext(),"没有评论",Toast.LENGTH_SHORT).show();
                     default:
                         break;
             }
@@ -255,6 +260,11 @@ public class detail extends Activity {
                 //第四层info
                 JSONObject info = hot.getJSONObject("info");
                 int count = info.getInt("count");
+                if (count==0){
+                    Message message = new Message();
+                    message.what = FAITL_LOAD;
+                    handler.sendMessage(message);
+                }
                 //第四层list
                 JSONArray list = hot.getJSONArray("list");
                 //第五层解析list

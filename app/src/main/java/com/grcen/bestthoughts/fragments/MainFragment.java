@@ -9,6 +9,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -44,6 +46,14 @@ public class MainFragment extends Fragment {
     public static final String POSITION = "POSITION";
     private Context mContext;
     private int mPosition;
+
+    private LinearLayoutManager mLayoutManager;
+    private static boolean hasMore = true; // 是否有下一页
+    private static int currentPage ;
+    // 若是上拉加载更多的网络请求 则不需要删除数据
+    private boolean isLoadingMore = false;
+    // 最后一个条目位置
+    private static int lastVisibleItem = 0;
 
 
     public static MainFragment newInstance(int position) {
@@ -88,7 +98,7 @@ public class MainFragment extends Fragment {
             }
             // 图片界面
             case 2: {
-                view = inflater.inflate(R.layout.fragment_picture, null);
+                view = inflater.inflate(R.layout.fragment_picture,  container, false);
                 initPictureView(view);
                 break;
             }
@@ -116,10 +126,10 @@ public class MainFragment extends Fragment {
 
     };
     public static final int UPDATE_ADAPTER = 1;
+    RecyclerView mrecyclerView;
     private List<Picture> pictureList = new ArrayList<>();
     private PictureAdapter adapter;
     private SwipeRefreshLayout swipeRefresh;
-    private int page = 0;
     private Handler handler  = new Handler(){
         public void handleMessage(Message msg){
             switch (msg.what){
@@ -133,39 +143,95 @@ public class MainFragment extends Fragment {
     };
     @SuppressLint("ResourceAsColor")
     private void initPictureView(View view) {
-        initPictures();
-        sendREquestWithOkHttp();
-        RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+        mrecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
-        recyclerView.setLayoutManager(layoutManager);
-        adapter = new PictureAdapter(pictureList);
-        recyclerView.setAdapter(adapter);
+        mrecyclerView.setLayoutManager(layoutManager);
+        adapter = new PictureAdapter(pictureList,getContext(),hasMore);
+
+        mLayoutManager = new GridLayoutManager(getContext(), 1);
+        mrecyclerView.setLayoutManager(mLayoutManager);
+        mrecyclerView.setAdapter(adapter);
+        mrecyclerView.setItemAnimator(new DefaultItemAnimator());
+        loadingMore();
+// 初始currentPage为1
+        currentPage = 1;
+
+// 网络请求
+        sendREquestWithOkHttp(currentPage);
+
+        initPictures();
+
         swipeRefresh = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh);
         swipeRefresh.setColorSchemeColors(R.color.zancolor);//改变刷新颜色
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 pictureList.clear();//随机调取数据
-                sendREquestWithOkHttp();
+                int page = 0;
+                sendREquestWithOkHttp(page);
                 refreshPictures();
             }
         });
+
     }
 
+    private void loadingMore(){
+        // 实现上拉加载重要步骤，设置滑动监听器，RecyclerView自带的ScrollListener
+        mrecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if(!isLoadingMore){        // 若不是加载更多 才 加载
+                    // 在newState为滑到底部时
+                    if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                        // 如果没有隐藏footView，那么最后一个条目的位置(带数据）就比我们的getItemCount少1
+                        if (!adapter.isFadeTips() && lastVisibleItem + 1 == adapter.getItemCount()) {
+                            // 然后调用updateRecyclerview方法更新RecyclerView
+                            updateRecyclerView();
 
-    private void sendREquestWithOkHttp() {
-        String pagestr = String.valueOf(page);
+                        }
+                        // 如果隐藏了提示条，我们又上拉加载时，那么最后一个条目(带数据）就要比getItemCount要少2
+                        if (adapter.isFadeTips() && lastVisibleItem + 2  == adapter.getItemCount()) {
+                            // 然后调用updateRecyclerview方法更新RecyclerView
+                            updateRecyclerView();    // 要调
+//                            Log.d(TAG, "onScrollStateChanged: 成功运行老子2");
+                        }
+                    }
+                }
+            }
+            //滚动监听
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                // 在滑动完成后，拿到最后一个可见的item的位置
+                lastVisibleItem = mLayoutManager.findLastVisibleItemPosition();
+//                Log.d(TAG, "onScrolled: 成功运行老子到——》"+dy);
+            }
+
+        });
+    }
+    // 上拉加载时调用的更新RecyclerView的方法
+    private void updateRecyclerView() {
+        Log.d(TAG, "updateRecyclerView: 成功运行老子1"+hasMore);
+        if(hasMore){
+            // 还有下一页 网络请求 第二页 第三页
+            currentPage++;    // 加1
+            isLoadingMore = false;
+            sendREquestWithOkHttp(currentPage);
+        }}
+    private void sendREquestWithOkHttp(int page) {
+        String pagestr = String.valueOf(page);//page属性
         final RequestBody requestBody = new FormBody.Builder().
-                add("type","3").add("page",pagestr).build();
+                add("type","3").add("page",pagestr).build();//构建请求
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try{
                     OkHttpClient client = new OkHttpClient();
                     Request request = new Request.Builder()
-                            .url("https://www.apiopen.top/satinGodApi")
-                            .post(requestBody)
-                            .build();
+                            .url("https://www.apiopen.top/satinGodApi")//api
+                            .post(requestBody)//post
+                            .build();//发情post请求
                     Response response = client.newCall(request).execute();
                     String responseData = response.body().string();
                     parseJSONWithJsonObject(responseData);
@@ -180,9 +246,11 @@ public class MainFragment extends Fragment {
                     JSONObject jsonObject = new JSONObject(jsonData);
                     String msg = jsonObject.getString("msg");
                     int code = jsonObject.getInt("code");
-                    Log.d(TAG, msg+"你好parseJSONWithJsonObject: "+jsonData);
                     JSONArray data = jsonObject.getJSONArray("data");
-                    Log.d(TAG, msg+"你好parseJSONWithJsonObject: "+data);
+                    Log.d(TAG, "parseJSONWithJsonObject: 成功"+data);
+                    if (data==null){
+                        hasMore=false;
+                    }
                     for (int i =0;i<data.length();i++){
                         JSONObject jsonObject1 = data.getJSONObject(i);
                          String type = jsonObject1.getString("type"); //文章类型
@@ -197,7 +265,6 @@ public class MainFragment extends Fragment {
                          int forward = jsonObject1.getInt("forward");//分享
                          String image = jsonObject1.getString("image");//图片链接
                          String thumbnail = jsonObject1.getString("thumbnail");//略缩图链接
-                         Log.d(TAG, msg+"你好parseJSONWithJsonObject: "+username);
                          Picture pictures1 = new Picture(username,text,up,comment,forward,header,thumbnail,down,uid,soureid);
                          pictureList.add(pictures1);
                     }
@@ -231,6 +298,7 @@ public class MainFragment extends Fragment {
             }
         }).start();
     }
+
 
     private void initPictures() {
         if (pictureList == null) {

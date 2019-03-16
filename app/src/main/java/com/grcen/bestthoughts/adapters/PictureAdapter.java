@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.CardView;
@@ -24,147 +26,160 @@ import com.grcen.bestthoughts.Bean.Picture;
 import com.grcen.bestthoughts.activity_image;
 import com.grcen.bestthoughts.detail;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class PictureAdapter extends RecyclerView.Adapter<PictureAdapter.ViewHolder> {
+public class PictureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private Context mContext;
     private List<Picture> mPictureList;
+    private LayoutInflater mLayoutInflater;
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
-        CardView cardView;
-        ImageView iconId;
-        ImageView imageId;
-        TextView name;
-        TextView content;
-        TextView zannum;
-        TextView contentnum;
-        TextView sharenum;
-        ImageButton deleteButton;
+    private int normalType = 0;     // 第一种ViewType，正常的item
+    private int footType = 1;       // 第二种ViewType，底部的提示View
 
-        ImageView zanimage;
-        //评论转发分享
-        LinearLayout upview;
-        LinearLayout contentview;
-        LinearLayout shareview;
+    private boolean hasMore = true;   // 变量，是否有更多数据
+    private boolean fadeTips = false; // 变量，是否隐藏了底部的提示
 
-        LinearLayout detail;
+    private Handler mHandler = new Handler(Looper.getMainLooper()); //获取主线程的Handler
 
-        public ViewHolder(View view){
-            super(view);
-            cardView = (CardView) view;
-            iconId = (ImageView) view.findViewById(R.id.icon);
-            imageId = (ImageView) view.findViewById(R.id.picture_image);
-            name = (TextView) view.findViewById(R.id.name);
-            content = (TextView) view.findViewById(R.id.content);
-            zannum = (TextView) view.findViewById(R.id.zan);
-            contentnum = (TextView) view.findViewById(R.id.comment);
-            sharenum = (TextView) view.findViewById(R.id.share);
-            deleteButton = (ImageButton) view.findViewById(R.id.dis);
-
-            zanimage = (ImageView)view.findViewById(R.id.zanimage);
-            //评论转发分享
-            upview = (LinearLayout) view.findViewById(R.id.upview);
-            contentview = (LinearLayout) view.findViewById(R.id.contentview);
-            shareview = (LinearLayout) view.findViewById(R.id.shareview);
-
-            detail = (LinearLayout) view.findViewById(R.id.detail);
-        }
-    }
-    public PictureAdapter(List<Picture> pictureList){
+    public PictureAdapter(List<Picture> pictureList,Context context,boolean hasMore){
         mPictureList = pictureList;
+        this.mContext = context;
+        this.hasMore = hasMore;
     }
 
-    @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (mContext == null){
-            mContext = parent.getContext();
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+//        if (mContext == null){
+//            mContext = parent.getContext();
+//        }
+//        View view = LayoutInflater.from(mContext).inflate(R.layout.picture_item,parent,false);
+//        return new ViewHolder(view);
+        // 根据返回的ViewType，绑定不同的布局文件，这里只有两种
+        View view;
+        if (viewType == normalType) {
+            return new NormalHolder(LayoutInflater.from(mContext).inflate(R.layout.picture_item, parent,false));
+        } else {
+            return new FootHolder(LayoutInflater.from(mContext).inflate(R.layout.bottom_item, parent,false));
         }
-        View view = LayoutInflater.from(mContext).inflate(R.layout.picture_item,parent,false);
-        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final ViewHolder holder, final int position) {
-        final Picture picture = mPictureList.get(position);
-        holder.name.setText(picture.getName());
-        holder.content.setText(picture.getContent());
-        holder.zannum.setText(picture.getZannum() + " ");//int不能直接转换成string
-        holder.contentnum.setText(picture.getContentnum() + " ");
-        holder.sharenum.setText(picture.getSharenum() + " ");
-        holder.detail.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext,detail.class);
-                Bundle bundle = new Bundle();
-                bundle.putString(detail.IMAGE_URL, picture.getImageId());
-                bundle.putString(detail.ICON_URL, picture.getIconId());
-                bundle.putInt(detail.ZAN_URL,picture.getZannum());
-                bundle.putInt(detail.SHARE_URL,picture.getSharenum());
-                bundle.putString(detail.CONTEXT_URL,picture.getContent());
-                bundle.putInt(detail.CONTENT_id,picture.getSoureid());
-                intent.putExtras(bundle);
-                mContext.startActivity(intent);//启动TwoActivity活动
-            }
-        });
-        Glide.with(mContext).load(picture.getIconId()).error(R.mipmap.oherro).into(holder.iconId);
+    public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
 
-        //图片优化
-        Glide.with(mContext).load(picture.getImageId())
-                .error(R.mipmap.oherro)
-                .thumbnail( 0.1f )
-                .into(holder.imageId);
+        // 如果是正常的imte，直接设置TextView的值
+        if (holder instanceof NormalHolder) {
+//            ((NormalHolder) holder).textView.setText(datas.get(position));
+            final Picture picture = mPictureList.get(position);
+            ((NormalHolder) holder).name.setText(picture.getName());
+            ((NormalHolder) holder).content.setText(picture.getContent());
+            ((NormalHolder) holder).zannum.setText(picture.getZannum() + " ");//int不能直接转换成string
+            ((NormalHolder) holder).contentnum.setText(picture.getContentnum() + " ");
+            ((NormalHolder) holder).sharenum.setText(picture.getSharenum() + " ");
+            ((NormalHolder) holder).detail.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext, detail.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putString(detail.IMAGE_URL, picture.getImageId());
+                    bundle.putString(detail.ICON_URL, picture.getIconId());
+                    bundle.putInt(detail.ZAN_URL, picture.getZannum());
+                    bundle.putInt(detail.SHARE_URL, picture.getSharenum());
+                    bundle.putString(detail.CONTEXT_URL, picture.getContent());
+                    bundle.putInt(detail.CONTENT_id, picture.getSoureid());
+                    intent.putExtras(bundle);
+                    mContext.startActivity(intent);//启动TwoActivity活动
+                }
+            });
+            Glide.with(mContext).load(picture.getIconId()).error(R.mipmap.oherro).into(((NormalHolder) holder).iconId);
 
-        holder.deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mPictureList.size()==1){
-                    Snackbar.make(v,"再删就没有了",Snackbar.LENGTH_SHORT).show();
-                }else {
-                    //删除自带默认动画
-                    removeData(position);
+            //图片优化
+            Glide.with(mContext).load(picture.getImageId())
+                    .error(R.mipmap.oherro)
+                    .thumbnail(0.1f)
+                    .into(((NormalHolder) holder).imageId);
+
+            ((NormalHolder) holder).deleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mPictureList.size() == 1) {
+                        Snackbar.make(v, "再删就没有了", Snackbar.LENGTH_SHORT).show();
+                    } else {
+                        //删除自带默认动画
+                        removeData(position);
+                    }
+                }
+            });
+            ((NormalHolder) holder).upview.setOnClickListener(new View.OnClickListener() {
+                @SuppressLint({"ResourceAsColor", "ResourceType"})
+                @Override
+                public void onClick(View v) {
+                    int zannew = picture.getZannum() + 1;
+                    ((NormalHolder) holder).zannum.setText(zannew + " ");
+                    ((NormalHolder) holder).zannum.setTextColor(R.color.zancolor);
+                    ((NormalHolder) holder).zanimage.setImageResource(R.mipmap.up);
+                }
+            });
+            ((NormalHolder) holder).imageId.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext, activity_image.class);
+                    intent.putExtra(activity_image.IMAGE_URL, picture.getImageId());
+                    mContext.startActivity(intent);
+                }
+            });
+            ((NormalHolder) holder).contentview.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext, detail.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putString(detail.IMAGE_URL, picture.getImageId());
+                    bundle.putString(detail.ICON_URL, picture.getIconId());
+                    bundle.putInt(detail.ZAN_URL, picture.getZannum());
+                    bundle.putInt(detail.SHARE_URL, picture.getSharenum());
+                    bundle.putString(detail.CONTEXT_URL, picture.getContent());
+                    intent.putExtras(bundle);
+
+                    mContext.startActivity(intent);//启动TwoActivity活动
+                }
+            });
+        }else {
+            // 之所以要设置可见，是因为我在没有更多数据时会隐藏了这个footView
+            ((FootHolder) holder).tips.setVisibility(View.VISIBLE);
+            // 只有获取数据为空时，hasMore为false，所以当我们拉到底部时基本都会首先显示“正在加载更多...”
+            if (hasMore == true) {
+                // 不隐藏footView提示
+                fadeTips = false;
+                if (mPictureList.size() > 0) {
+                    // 如果查询数据发现增加之后，就显示正在加载更多
+                    ((FootHolder) holder).tips.setText("正在加载更多...");
+                }
+            } else {
+                if (mPictureList.size() > 0) {
+                    // 如果查询数据发现并没有增加时，就显示没有更多数据了
+                    ((FootHolder) holder).tips.setText("没有更多数据了");
+
+                    // 然后通过延时加载模拟网络请求的时间，在500ms后执行
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            // 隐藏提示条
+                            ((FootHolder) holder).tips.setVisibility(View.GONE);
+                            // 将fadeTips设置true
+                            fadeTips = true;
+                            // hasMore设为true是为了让再次拉到底时，会先显示正在加载更多
+                            hasMore = true;
+                        }
+                    }, 500);
                 }
             }
-        });
-        holder.upview.setOnClickListener(new View.OnClickListener() {
-            @SuppressLint({"ResourceAsColor", "ResourceType"})
-            @Override
-            public void onClick(View v) {
-                int zannew = picture.getZannum()+1;
-                holder.zannum.setText(zannew+ " ");
-                holder.zannum.setTextColor(R.color.zancolor);
-                holder.zanimage.setImageResource(R.mipmap.up);
-            }
-        });
-        holder.imageId.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext,activity_image.class);
-                intent.putExtra(activity_image.IMAGE_URL,picture.getImageId());
-                mContext.startActivity(intent);
-            }
-        });
-        holder.contentview.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext,detail.class);
-                Bundle bundle = new Bundle();
-                bundle.putString(detail.IMAGE_URL, picture.getImageId());
-                bundle.putString(detail.ICON_URL, picture.getIconId());
-                bundle.putInt(detail.ZAN_URL,picture.getZannum());
-                bundle.putInt(detail.SHARE_URL,picture.getSharenum());
-                bundle.putString(detail.CONTEXT_URL,picture.getContent());
-                intent.putExtras(bundle);
-
-                mContext.startActivity(intent);//启动TwoActivity活动
-            }
-        });
+        }
     }
 
 
     @Override
     public int getItemCount() {
-        return mPictureList.size();
+        return mPictureList.size() + 1;
     }
     public void removeData(int position) {
         mPictureList.remove(position);
@@ -173,4 +188,88 @@ public class PictureAdapter extends RecyclerView.Adapter<PictureAdapter.ViewHold
             notifyItemRangeChanged(position, mPictureList.size() - position);
         }
     }
+    // 自定义方法，获取列表中数据源的最后一个位置，比getItemCount少1，因为不计上footView
+    public int getRealLastPosition() {
+        return mPictureList.size();
+    }
+    // 根据条目位置返回ViewType，以供onCreateViewHolder方法内获取不同的Holder
+    @Override
+    public int getItemViewType(int position) {
+        if (position == getItemCount() - 1) {
+            return footType;
+        } else {
+            return normalType;
+        }
+    }
+    // 正常item的ViewHolder，用以缓存findView操作
+    class NormalHolder extends RecyclerView.ViewHolder {
+//        private TextView textView;
+private CardView cardView;
+        private ImageView iconId;
+        private ImageView imageId;
+        private TextView name;
+        private TextView content;
+        private TextView zannum;
+        private TextView contentnum;
+        private TextView sharenum;
+        private ImageButton deleteButton;
+
+        private ImageView zanimage;
+        //评论转发分享
+        private LinearLayout upview;
+        private LinearLayout contentview;
+        private LinearLayout shareview;
+
+        private LinearLayout detail;
+        public NormalHolder(View itemView) {
+            super(itemView);
+//            textView = (TextView) itemView.findViewById(R.id.tv);
+            cardView = (CardView) itemView;
+            iconId = (ImageView) itemView.findViewById(R.id.icon);
+            imageId = (ImageView) itemView.findViewById(R.id.picture_image);
+            name = (TextView) itemView.findViewById(R.id.name);
+            content = (TextView) itemView.findViewById(R.id.content);
+            zannum = (TextView) itemView.findViewById(R.id.zan);
+            contentnum = (TextView) itemView.findViewById(R.id.comment);
+            sharenum = (TextView) itemView.findViewById(R.id.share);
+            deleteButton = (ImageButton) itemView.findViewById(R.id.dis);
+
+            zanimage = (ImageView)itemView.findViewById(R.id.zanimage);
+            //评论转发分享
+            upview = (LinearLayout) itemView.findViewById(R.id.upview);
+            contentview = (LinearLayout) itemView.findViewById(R.id.contentview);
+            shareview = (LinearLayout) itemView.findViewById(R.id.shareview);
+
+            detail = (LinearLayout) itemView.findViewById(R.id.detail);
+        }
+    }
+    // // 底部footView的ViewHolder，用以缓存findView操作
+    class FootHolder extends RecyclerView.ViewHolder {
+        private TextView tips;
+
+        public FootHolder(View itemView) {
+            super(itemView);
+            tips = (TextView) itemView.findViewById(R.id.foot_tips);
+        }
+    }
+    // 暴露接口，改变fadeTips的方法
+    public boolean isFadeTips() {
+        return fadeTips;
+    }
+
+    // 暴露接口，下拉刷新时，通过暴露方法将数据源置为空
+    public void resetPicturess() {
+        mPictureList = new ArrayList<>();
+    }
+
+    // 暴露接口，更新数据源，并修改hasMore的值，如果有增加数据，hasMore为true，否则为false
+    public void updateList(List<Picture> newPictures, boolean hasMore) {
+        // 在原有的数据之上增加新数据
+        if (newPictures != null) {
+            mPictureList.addAll(newPictures);
+        }
+        this.hasMore = hasMore;
+        notifyDataSetChanged();
+    }
+
 }
